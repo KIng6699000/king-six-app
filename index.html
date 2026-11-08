@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8"><!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" <!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#090f1d" />
+  <meta name="description" content="TeamDesk — real-time team and agent work-record management." />
+  <title>TeamDesk | Team Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'Noto Sans Myanmar', 'system-ui', 'sans-serif'] },
+          boxShadow: { glow: '0 0 0 1px rgba(99,102,241,.16), 0 18px 60px rgba(0,0,0,.28)' }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root { color-scheme: dark; }
+    body { background: #090f1d; }
+    .glass { background: rgba(17, 27, 47, .82); border: 1px solid rgba(148,163,184,.13); backdrop-filter: blur(14px); }
+    .field { width:100%; border-radius: .85rem; border:1px solid rgba(148,163,184,.2); background:#0b1425; color:#e5e7eb; padding:.8rem .95rem; outline:none; transition:.18s; }
+    .field:focus { border-color:#818cf8; box-shadow:0 0 0 3px rgba(99,102,241,.14); }
+    .field::placeholder { color:#64748b; }
+    .btn-primary { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:white; transition:.18s; }
+    .btn-primary:hover { filter:brightness(1.1); transform:translateY(-1px); }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .muted { color:#94a3b8; }
+    .scrollbar::-webkit-scrollbar { width:7px; height:7px; }
+    .scrollbar::-webkit-scrollbar-thumb { background:#334155; border-radius:10px; }
+    .status-pill { display:inline-flex; align-items:center; gap:.4rem; padding:.32rem .62rem; border-radius:999px; font-size:.72rem; font-weight:700; white-space:nowrap; }
+    .status-open { background:rgba(59,130,246,.13); color:#93c5fd; }
+    .status-in_progress { background:rgba(245,158,11,.13); color:#fcd34d; }
+    .status-done { background:rgba(16,185,129,.13); color:#6ee7b7; }
+    .status-cancelled { background:rgba(148,163,184,.13); color:#cbd5e1; }
+    .dot { width:7px; height:7px; border-radius:50%; display:inline-block; }
+    .fade-in { animation:fade .25s ease-out; }
+    @keyframes fade { from {opacity:0; transform:translateY(5px)} to {opacity:1; transform:translateY(0)} }
+    dialog { background:#111b2f; color:#e2e8f0; border:1px solid rgba(148,163,184,.2); border-radius:1.2rem; max-width:min(720px, calc(100vw - 28px)); width:100%; }
+    dialog::backdrop { background:rgba(2,6,23,.78); backdrop-filter:blur(5px); }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 font-sans antialiased">
+  <div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+    <div class="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-indigo-600/10 blur-3xl"></div>
+    <div class="absolute top-1/3 -right-40 h-96 w-96 rounded-full bg-violet-600/10 blur-3xl"></div>
+  </div>
+
+  <!-- Authentication screen -->
+  <main id="auth-screen" class="relative z-10 min-h-screen flex items-center justify-center p-4">
+    <section class="glass shadow-glow w-full max-w-md rounded-3xl p-7 sm:p-9 fade-in">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 grid place-items-center shadow-lg shadow-indigo-950/40">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-7" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 6h3v3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="text-xl font-extrabold tracking-tight">TeamDesk</div>
+          <div class="text-xs muted mt-0.5">TEAM & AGENT MANAGEMENT</div>
+        </div>
+      </div>
+      <div class="mb-6">
+        <p class="text-sm text-indigo-300 font-semibold mb-2">WELCOME BACK</p>
+        <h1 class="text-2xl font-bold">အကောင့်ဝင်ရန်</h1>
+        <p class="muted text-sm mt-2">Master သို့မဟုတ် Agent အကောင့်ဖြင့် ဝင်ရောက်ပါ။</p>
+      </div>
+      <div id="setup-warning" class="hidden rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200 mb-4">
+        Firebase ကို မချိတ်ဆက်ရသေးပါ။ ဖိုင်ထဲရှိ <code>firebaseConfig</code> ကို သင့် Firebase project အချက်အလက်များဖြင့် အစားထိုးပါ။
+      </div>
+      <form id="login-form" class="space-y-4">
+        <label class="block"><span class="text-sm text-slate-300 mb-2 block">အီးမေးလ်</span><input id="email" class="field" type="email" autocomplete="username" placeholder="name@example.com" required /></label>
+        <label class="block"><span class="text-sm text-slate-300 mb-2 block">စကားဝှက်</span><input id="password" class="field" type="password" autocomplete="current-password" placeholder="••••••••" required /></label>
+        <button id="login-button" class="btn-primary w-full rounded-xl py-3 font-bold" type="submit">Login ဝင်မည်</button>
+      </form>
+      <div id="auth-message" class="hidden mt-4 rounded-xl p-3 text-sm"></div>
+      <div class="mt-7 pt-5 border-t border-slate-700/60 flex items-center justify-between text-xs muted">
+        <span>Secure team workspace</span><button id="open-setup-auth" class="hover:text-indigo-300">Setup လမ်းညွှန်</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Main app -->
+  <div id="app-screen" class="hidden relative z-10 min-h-screen">
+    <header class="sticky top-0 z-20 border-b border-slate-800/80 bg-[#090f1d]/90 backdrop-blur-xl">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 grid place-items-center">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="min-w-0"><div class="font-extrabold tracking-tight">TeamDesk</div><div class="text-[11px] muted truncate">လုပ်ငန်းမှတ်တမ်း စီမံခန့်ခွဲမှု</div></div>
+        </div>
+        <div class="flex items-center gap-2 sm:gap-3">
+          <span id="connection-chip" class="hidden sm:inline-flex items-center gap-2 rounded-full border border-slate-700 px-3 py-1.5 text-xs muted"><i class="dot bg-slate-500"></i><span>Checking…</span></span>
+          <button id="open-setup-app" class="hidden sm:inline-flex rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800">Setup</button>
+          <div class="hidden sm:block text-right"><div id="header-name" class="text-sm font-semibold truncate max-w-36"></div><div id="header-role" class="text-[11px] text-indigo-300"></div></div>
+          <button id="logout-button" class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold hover:bg-slate-800">ထွက်ရန်</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-7 sm:py-9">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-7">
+        <div><p class="text-sm text-indigo-300 font-semibold mb-1" id="welcome-label">WORKSPACE</p><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight" id="page-title">Dashboard</h1><p class="muted text-sm mt-2" id="page-subtitle">အဖွဲ့၏ လုပ်ငန်းမှတ်တမ်းများကို တစ်နေရာတည်းတွင် စီမံပါ။</p></div>
+        <div class="text-xs muted" id="last-updated">Real-time sync enabled</div>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div class="glass rounded-2xl p-4 sm:p-5"><div class="text-xs muted">စုစုပေါင်းမှတ်တမ်း</div><div id="stat-total" class="text-2xl sm:text-3xl font-extrabold mt-2">0</div><div class="text-[11px] text-slate-500 mt-1">Loaded records</div></div>
+        <div class="glass rounded-2xl p-4 sm:p-5"><div class="text-xs muted">အသစ် / စောင့်ဆိုင်း</div><div id="stat-open" class="text-2xl sm:text-3xl font-extrabold text-blue-300 mt-2">0</div><div class="text-[11px] text-slate-500 mt-1">Open</div></div>
+        <div class="glass rounded-2xl p-4 sm:p-5"><div class="text-xs muted">လုပ်ဆောင်နေဆဲ</div><div id="stat-progress" class="text-2xl sm:text-3xl font-extrabold text-amber-300 mt-2">0</div><div class="text-[11px] text-slate-500 mt-1">In progress</div></div>
+        <div class="glass rounded-2xl p-4 sm:p-5"><div class="text-xs muted">ပြီးစီး</div><div id="stat-done" class="text-2xl sm:text-3xl font-extrabold text-emerald-300 mt-2">0</div><div class="text-[11px] text-slate-500 mt-1">Completed</div></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Agent submission form -->
+        <section id="submit-panel" class="hidden lg:col-span-4 glass rounded-2xl p-5 sm:p-6 h-fit">
+          <div class="flex items-center justify-between mb-5"><div><h2 class="font-bold text-lg">မှတ်တမ်းအသစ်</h2><p class="muted text-xs mt-1">လုပ်ငန်းဆောင်ရွက်မှုကို တင်သွင်းပါ။</p></div><span class="rounded-lg bg-indigo-500/15 text-indigo-300 p-2"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14m-7-7h14" stroke-linecap="round"/></svg></span></div>
+          <form id="record-form" class="space-y-4">
+            <label class="block"><span class="text-sm text-slate-300 mb-2 block">လုပ်ငန်းခေါင်းစဉ် <b class="text-rose-400">*</b></span><input id="record-title" class="field" maxlength="90" placeholder="ဥပမာ - Customer follow-up" required /></label>
+            <label class="block"><span class="text-sm text-slate-300 mb-2 block">အသေးစိတ်</span><textarea id="record-details" class="field resize-y min-h-28" maxlength="1000" placeholder="လုပ်ငန်းအကြောင်း အသေးစိတ်ရေးပါ…"></textarea></label>
+            <label class="block"><span class="text-sm text-slate-300 mb-2 block">ဦးစားပေးအဆင့်</span><select id="record-priority" class="field"><option value="normal">ပုံမှန်</option><option value="high">မြင့်</option><option value="urgent">အရေးကြီး</option></select></label>
+            <button id="submit-button" type="submit" class="btn-primary w-full rounded-xl py-3 font-bold">မှတ်တမ်းတင်မည်</button>
+          </form>
+          <div id="record-message" class="hidden mt-4 rounded-xl p-3 text-sm"></div>
+          <p class="text-[11px] muted mt-4 leading-relaxed">Internet မရှိချိန်တွင်လည်း မှတ်တမ်းများကို စက်ထဲတွင် ယာယီသိမ်းနိုင်ပြီး အင်တာနက်ပြန်ရသောအခါ Sync လုပ်ပါမည်။</p>
+        </section>
+
+        <!-- Records table -->
+        <section class="lg:col-span-8 glass rounded-2xl overflow-hidden">
+          <div class="p-5 sm:p-6 border-b border-slate-700/60">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div><h2 class="font-bold text-lg" id="records-heading">မှတ်တမ်းများ</h2><p class="muted text-xs mt-1" id="records-caption">နောက်ဆုံးတင်သွင်းထားသော မှတ်တမ်းများ</p></div>
+              <div class="flex gap-2">
+                <input id="search-input" class="field !w-full sm:!w-48 !py-2 !text-sm" placeholder="ရှာဖွေရန်…" aria-label="Search records" />
+                <select id="status-filter" class="field !w-32 !py-2 !text-sm" aria-label="Filter status"><option value="all">အားလုံး</option><option value="open">အသစ်</option><option value="in_progress">လုပ်ဆောင်နေ</option><option value="done">ပြီးစီး</option><option value="cancelled">ပယ်ဖျက်</option></select>
+              </div>
+            </div>
+          </div>
+          <div class="overflow-x-auto scrollbar">
+            <table class="w-full text-left min-w-[650px]">
+              <thead class="bg-slate-900/50 text-[11px] uppercase tracking-wider text-slate-500"><tr><th class="px-5 py-3 font-semibold">လုပ်ငန်း / Agent</th><th class="px-4 py-3 font-semibold">ဦးစားပေး</th><th class="px-4 py-3 font-semibold">အခြေအနေ</th><th class="px-4 py-3 font-semibold">ရက်စွဲ</th><th class="px-5 py-3 text-right font-semibold">Action</th></tr></thead>
+              <tbody id="records-body" class="divide-y divide-slate-800/80"><tr><td colspan="5" class="px-5 py-12 text-center muted text-sm">မှတ်တမ်းများကို ဖတ်ရှုနေသည်…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="px-5 py-3 border-t border-slate-700/60 flex items-center justify-between gap-3"><span id="record-count" class="text-xs muted">0 records</span><button id="export-button" class="text-xs font-semibold text-indigo-300 hover:text-indigo-200">Export CSV ↓</button></div>
+        </section>
+      </div>
+      <footer class="mt-8 text-center text-[11px] text-slate-600">TeamDesk · Real-time team workspace · Keep your Firebase security rules enabled</footer>
+    </main>
+  </div>
+
+  <!-- Setup dialog includes Firestore rules to copy into Firebase Console -->
+  <dialog id="setup-dialog" class="p-0 shadow-2xl">
+    <div class="p-5 sm:p-7 max-h-[85vh] overflow-y-auto scrollbar">
+      <div class="flex items-start justify-between gap-4"><div><div class="text-indigo-300 text-xs font-bold tracking-widest">CONFIGURATION</div><h2 class="text-xl font-bold mt-1">Firebase Setup လမ်းညွှန်</h2></div><button id="close-setup" class="rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5">✕</button></div>
+      <ol class="list-decimal pl-5 mt-5 space-y-2 text-sm text-slate-300 leading-relaxed">
+        <li>Firebase Console တွင် Project အသစ်ဖန်တီးပြီး <b>Authentication → Email/Password</b> ကို Enable လုပ်ပါ။</li>
+        <li><b>Firestore Database</b> ဖန်တီးပြီး Web App config ကို အောက်ပါ <code>firebaseConfig</code> နေရာတွင် ထည့်ပါ။</li>
+        <li>Authentication ထဲတွင် Master နှင့် Agent အကောင့်များကို ကြိုတင်ဖန်တီးပါ။</li>
+        <li>Firestore → <code>users</code> collection ထဲတွင် UID နဲ့တူသော document တစ်ခုစီ ဖန်တီးပါ။ Master အတွက် <code>{ role: "master", displayName: "Master Name" }</code>၊ Agent အတွက် <code>{ role: "agent", displayName: "Agent Name" }</code> ထည့်ပါ။</li>
+        <li>အောက်ပါ Security Rules ကို Firestore → Rules ထဲသို့ ကူးထည့်ပြီး Publish လုပ်ပါ။</li>
+      </ol>
+      <div class="mt-5 flex items-center justify-between gap-3"><h3 class="font-semibold text-sm">Firestore Security Rules</h3><button id="copy-rules" class="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3 py-2 text-xs font-bold">Copy Rules</button></div>
+      <pre class="mt-2 rounded-xl bg-[#080e19] border border-slate-700 p-4 overflow-x-auto text-xs text-emerald-200 leading-relaxed"><code id="rules-preview"></code></pre>
+      <p class="text-xs text-amber-200/90 mt-4 leading-relaxed">မှတ်ချက် — ဤဖိုင်သည် အသင်းအဖွဲ့၏ အထွေထွေ လုပ်ငန်းမှတ်တမ်းစနစ်ဖြစ်ပြီး ငွေကြေး၊ လောင်းကြေး သို့မဟုတ် လောင်းကစားလုပ်ငန်းဆောင်ရွက်ချက်များကို မစီမံပါ။ Production မတင်မီ Rules ကို စမ်းသပ်ပြီး Firebase App Check နှင့် သင့်တော်သော backup စနစ်ကို ထပ်မံဖွင့်ပါ။</p>
+    </div>
+  </dialog>
+
+  <script type="text/plain" id="firestore-rules-source">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isMaster() {
+      return signedIn() && userDoc().role == 'master';
+    }
+    function isAgent() {
+      return signedIn() && userDoc().role == 'agent';
+    }
+
+    match /users/{userId} {
+      allow get: if signedIn() && (request.auth.uid == userId || isMaster());
+      allow list: if isMaster();
+      // Provision roles from Firebase Console or a trusted Admin SDK only.
+      allow create, update, delete: if false;
+    }
+
+    match /workItems/{itemId} {
+      allow read: if isMaster() || (signedIn() && resource.data.createdBy == request.auth.uid);
+      allow create: if isAgent()
+        && request.resource.data.keys().hasOnly([
+          'createdBy', 'agentName', 'title', 'details', 'priority', 'status', 'createdAt'
+        ])
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.agentName == userDoc().displayName
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 90
+        && request.resource.data.details is string
+        && request.resource.data.details.size() <= 1000
+        && request.resource.data.priority in ['normal', 'high', 'urgent']
+        && request.resource.data.status == 'open'
+        && request.resource.data.createdAt == request.time;
+      allow update: if isMaster()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status in ['open', 'in_progress', 'done', 'cancelled']
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isMaster();
+    }
+  }
+}</script>
+
+  <!-- Firebase v9 Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Replace these values with your Firebase project's Web App configuration.
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const authScreen = $('auth-screen');
+    const appScreen = $('app-screen');
+    const authMessage = $('auth-message');
+    const recordMessage = $('record-message');
+    const setupDialog = $('setup-dialog');
+    const allStatus = ['open', 'in_progress', 'done', 'cancelled'];
+    const statusLabels = { open: 'အသစ်', in_progress: 'လုပ်ဆောင်နေ', done: 'ပြီးစီး', cancelled: 'ပယ်ဖျက်' };
+    const priorityLabels = { normal: 'ပုံမှန်', high: 'မြင့်', urgent: 'အရေးကြီး' };
+
+    let app, db, auth, currentUser = null, currentProfile = null, unsubscribeRecords = null;
+    let records = [];
+    let firebaseReady = false;
+
+    function showMessage(target, message, type = 'error') {
+      target.textContent = message;
+      target.className = 'mt-4 rounded-xl p-3 text-sm ' + (type === 'success' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-300 border border-rose-500/20');
+      target.classList.remove('hidden');
+    }
+    function hideMessage(target) { target.classList.add('hidden'); }
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+    function dateValue(value) {
+      if (!value) return null;
+      if (typeof value.toDate === 'function') return value.toDate();
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+    function formatDate(value) {
+      const date = dateValue(value);
+      return date ? new Intl.DateTimeFormat('my-MM', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }).format(date) : 'Sync pending';
+    }
+    function setConnection(online, detail = '') {
+      const chip = $('connection-chip');
+      const dot = chip.querySelector('.dot');
+      const label = chip.querySelector('span');
+      chip.classList.remove('hidden');
+      dot.className = 'dot ' + (online ? 'bg-emerald-400' : 'bg-amber-400');
+      label.textContent = online ? (detail || 'Online · Synced') : (detail || 'Offline · Cached');
+    }
+    function openSetup() {
+      $('rules-preview').textContent = $('firestore-rules-source').textContent.trim();
+      if (typeof setupDialog.showModal === 'function') setupDialog.showModal();
+      else setupDialog.setAttribute('open', '');
+    }
+    $('open-setup-auth').addEventListener('click', openSetup);
+    $('open-setup-app').addEventListener('click', openSetup);
+    $('close-setup').addEventListener('click', () => setupDialog.close());
+    setupDialog.addEventListener('click', (event) => { if (event.target === setupDialog) setupDialog.close(); });
+    $('copy-rules').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText($('firestore-rules-source').textContent.trim());
+        $('copy-rules').textContent = 'Copied ✓';
+        setTimeout(() => $('copy-rules').textContent = 'Copy Rules', 1600);
+      } catch (_) { $('copy-rules').textContent = 'Select and copy text'; }
+    });
+
+    function validConfig() {
+      return firebaseConfig.apiKey !== 'YOUR_API_KEY' && firebaseConfig.projectId !== 'YOUR_PROJECT_ID' && firebaseConfig.appId !== 'YOUR_APP_ID';
+    }
+    if (!validConfig()) {
+      $('setup-warning').classList.remove('hidden');
+      $('login-button').disabled = true;
+    } else {
+      try {
+        app = firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+        db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+          if (err.code === 'failed-precondition') console.warn('Firestore persistence is already active in another tab.');
+          else if (err.code === 'unimplemented') console.warn('This browser does not support Firestore offline persistence.');
+          else console.warn('Firestore persistence:', err.message);
+        });
+        firebaseReady = true;
+        window.addEventListener('online', () => setConnection(true));
+        window.addEventListener('offline', () => setConnection(false));
+        auth.onAuthStateChanged(handleAuthState);
+      } catch (error) {
+        console.error(error);
+        showMessage(authMessage, 'Firebase စတင်ဖွင့်ရာတွင် အမှားရှိနေပါသည်။ Config ကို ပြန်စစ်ပါ။');
+      }
+    }
+
+    $('login-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!firebaseReady) return;
+      hideMessage(authMessage);
+      const button = $('login-button');
+      button.disabled = true; button.textContent = 'ဝင်ရောက်နေသည်…';
+      try {
+        await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value);
+      } catch (error) {
+        const messages = {
+          'auth/invalid-email': 'အီးမေးလ်ပုံစံ မမှန်ပါ။',
+          'auth/user-not-found': 'ဤအီးမေးလ်အတွက် အကောင့်မတွေ့ပါ။',
+          'auth/wrong-password': 'စကားဝှက် မှားနေပါသည်။',
+          'auth/invalid-credential': 'အီးမေးလ် သို့မဟုတ် စကားဝှက် မမှန်ပါ။',
+          'auth/too-many-requests': 'ကြိုးစားမှု များလွန်းပါသည်။ ခဏနားပြီး ပြန်စမ်းပါ။'
+        };
+        showMessage(authMessage, messages[error.code] || error.message || 'Login မအောင်မြင်ပါ။');
+      } finally {
+        button.disabled = false; button.textContent = 'Login ဝင်မည်';
+      }
+    });
+
+    async function handleAuthState(user) {
+      if (!user) {
+        currentUser = null; currentProfile = null; records = [];
+        if (unsubscribeRecords) unsubscribeRecords();
+        appScreen.classList.add('hidden'); authScreen.classList.remove('hidden');
+        return;
+      }
+      currentUser = user;
+      try {
+        const profileSnap = await db.collection('users').doc(user.uid).get();
+        if (!profileSnap.exists || !['master', 'agent'].includes(profileSnap.data().role)) {
+          await auth.signOut();
+          showMessage(authMessage, 'အသုံးပြုသူ Role မသတ်မှတ်ရသေးပါ။ Firebase users collection တွင် UID နှင့်တူသော document ဖန်တီးပါ။');
+          return;
+        }
+        currentProfile = profileSnap.data();
+        if (!currentProfile.active && currentProfile.active !== undefined) {
+          await auth.signOut();
+          showMessage(authMessage, 'ဤအကောင့်ကို ပိတ်ထားပါသည်။ Admin ကို ဆက်သွယ်ပါ။');
+          return;
+        }
+        authScreen.classList.add('hidden'); appScreen.classList.remove('hidden');
+        $('header-name').textContent = currentProfile.displayName || user.email;
+        $('header-role').textContent = currentProfile.role === 'master' ? 'MASTER' : 'AGENT';
+        $('welcome-label').textContent = currentProfile.role === 'master' ? 'MASTER WORKSPACE' : 'AGENT WORKSPACE';
+        $('page-title').textContent = currentProfile.role === 'master' ? 'Master Dashboard' : 'Agent Dashboard';
+        $('page-subtitle').textContent = currentProfile.role === 'master' ? 'အဖွဲ့ဝင်များ၏ လုပ်ငန်းမှတ်တမ်းအားလုံးကို အချိန်နှင့်တစ်ပြေးညီ ကြည့်ရှုစီမံနိုင်သည်။' : 'သင့်လုပ်ငန်းမှတ်တမ်းများကို တင်သွင်းပြီး အခြေအနေကို စောင့်ကြည့်နိုင်သည်။';
+        $('submit-panel').classList.toggle('hidden', currentProfile.role !== 'agent');
+        $('records-heading').textContent = currentProfile.role === 'master' ? 'အဖွဲ့၏ မှတ်တမ်းအားလုံး' : 'ကျွန်ုပ်၏ မှတ်တမ်းများ';
+        $('records-caption').textContent = currentProfile.role === 'master' ? 'Agents အားလုံးမှ တင်သွင်းသော မှတ်တမ်းများ' : 'သင်တင်သွင်းထားသော မှတ်တမ်းများ';
+        attachRecordsListener();
+        setConnection(navigator.onLine, navigator.onLine ? 'Online · Connecting' : 'Offline · Cached');
+      } catch (error) {
+        console.error(error);
+        await auth.signOut();
+        showMessage(authMessage, 'အသုံးပြုသူအချက်အလက်ကို ဖတ်မရပါ။ Firestore Security Rules နှင့် users document ကို စစ်ဆေးပါ။');
+      }
+    }
+
+    function attachRecordsListener() {
+      if (unsubscribeRecords) unsubscribeRecords();
+      const base = db.collection('workItems');
+      const query = currentProfile.role === 'master'
+        ? base.orderBy('createdAt', 'desc').limit(500)
+        : base.where('createdBy', '==', currentUser.uid).limit(200);
+      unsubscribeRecords = query.onSnapshot({ includeMetadataChanges: true }, (snapshot) => {
+        records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        records.sort((a, b) => (dateValue(b.createdAt)?.getTime() || 0) - (dateValue(a.createdAt)?.getTime() || 0));
+        renderRecords();
+        const fromCache = snapshot.metadata.fromCache;
+        const pending = snapshot.metadata.hasPendingWrites;
+        setConnection(navigator.onLine && !fromCache, pending ? 'Syncing changes…' : (fromCache ? 'Offline · Cached' : 'Online · Synced'));
+        $('last-updated').textContent = pending ? 'Changes waiting to sync' : 'Updated ' + new Date().toLocaleTimeString();
+      }, (error) => {
+        console.error(error);
+        showMessage(recordMessage, 'မှတ်တမ်းများကို ဖတ်မရပါ။ Firestore Rules / Index ကို စစ်ဆေးပါ။');
+      });
+    }
+
+    function renderRecords() {
+      const search = $('search-input').value.trim().toLowerCase();
+      const status = $('status-filter').value;
+      const filtered = records.filter(item => {
+        const text = [item.title, item.details, item.agentName, item.priority, statusLabels[item.status]].join(' ').toLowerCase();
+        return (!search || text.includes(search)) && (status === 'all' || item.status === status);
+      });
+      $('stat-total').textContent = records.length;
+      $('stat-open').textContent = records.filter(x => x.status === 'open').length;
+      $('stat-progress').textContent = records.filter(x => x.status === 'in_progress').length;
+      $('stat-done').textContent = records.filter(x => x.status === 'done').length;
+      $('record-count').textContent = `${filtered.length} / ${records.length} records`;
+      if (!filtered.length) {
+        $('records-body').innerHTML = `<tr><td colspan="5" class="px-5 py-14 text-center"><div class="text-3xl mb-3">☷</div><div class="text-sm font-semibold text-slate-300">မှတ်တမ်း မရှိသေးပါ</div><div class="text-xs muted mt-1">ရှာဖွေမှုကို ပြောင်းပါ သို့မဟုတ် မှတ်တမ်းအသစ် တင်သွင်းပါ။</div></td></tr>`;
+        return;
+      }
+      $('records-body').innerHTML = filtered.map(item => {
+        const currentStatus = allStatus.includes(item.status) ? item.status : 'open';
+        const priority = priorityLabels[item.priority] || 'ပုံမှန်';
+        const statusClass = `status-${currentStatus}`;
+        const statusControl = currentProfile.role === 'master'
+          ? `<select data-id="${escapeHtml(item.id)}" class="status-select bg-[#0b1425] border border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-indigo-500"><option value="open" ${currentStatus==='open'?'selected':''}>အသစ်</option><option value="in_progress" ${currentStatus==='in_progress'?'selected':''}>လုပ်ဆောင်နေ</option><option value="done" ${currentStatus==='done'?'selected':''}>ပြီးစီး</option><option value="cancelled" ${currentStatus==='cancelled'?'selected':''}>ပယ်ဖျက်</option></select>`
+          : `<span class="status-pill ${statusClass}"><i class="dot bg-current"></i>${statusLabels[currentStatus]}</span>`;
+        return `<tr class="hover:bg-slate-800/25 transition-colors">
+          <td class="px-5 py-4"><div class="font-semibold text-sm text-slate-200">${escapeHtml(item.title || 'Untitled')}</div><div class="text-xs muted mt-1">${escapeHtml(item.agentName || 'Agent')}${item.details ? ' · ' + escapeHtml(item.details.slice(0,65)) + (item.details.length>65?'…':'') : ''}</div></td>
+          <td class="px-4 py-4"><span class="text-xs ${item.priority==='urgent'?'text-rose-300':item.priority==='high'?'text-amber-300':'text-slate-400'}">${escapeHtml(priority)}</span></td>
+          <td class="px-4 py-4">${statusControl}</td>
+          <td class="px-4 py-4 text-xs muted whitespace-nowrap">${escapeHtml(formatDate(item.createdAt))}</td>
+          <td class="px-5 py-4 text-right">${item.details ? `<button class="detail-button text-xs text-indigo-300 hover:text-indigo-200" data-id="${escapeHtml(item.id)}">အသေးစိတ်</button>` : '<span class="text-slate-600">—</span>'}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    $('record-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!currentUser || currentProfile?.role !== 'agent') return;
+      hideMessage(recordMessage);
+      const title = $('record-title').value.trim();
+      const details = $('record-details').value.trim();
+      const priority = $('record-priority').value;
+      if (!title || title.length > 90 || details.length > 1000) {
+        showMessage(recordMessage, 'ခေါင်းစဉ်နှင့် အသေးစိတ်စာသားကို ပြန်စစ်ပါ။'); return;
+      }
+      const button = $('submit-button'); button.disabled = true; button.textContent = 'သိမ်းဆည်းနေသည်…';
+      try {
+        await db.collection('workItems').add({
+          createdBy: currentUser.uid,
+          agentName: String(currentProfile.displayName || currentUser.email).slice(0, 80),
+          title, details, priority, status: 'open',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        $('record-form').reset();
+        showMessage(recordMessage, 'မှတ်တမ်းကို သိမ်းဆည်းပြီးပါပြီ။', 'success');
+      } catch (error) {
+        console.error(error);
+        showMessage(recordMessage, error.code === 'permission-denied' ? 'ခွင့်ပြုချက်မရှိပါ။ Firestore Security Rules / Agent Role ကို စစ်ဆေးပါ။' : 'သိမ်းဆည်းမရပါ။ အင်တာနက်နှင့် Firebase config ကို စစ်ဆေးပါ။');
+      } finally { button.disabled = false; button.textContent = 'မှတ်တမ်းတင်မည်'; }
+    });
+
+    $('records-body').addEventListener('change', async (event) => {
+      const select = event.target.closest('.status-select');
+      if (!select || currentProfile?.role !== 'master') return;
+      const id = select.dataset.id;
+      const nextStatus = select.value;
+      select.disabled = true;
+      try {
+        await db.collection('workItems').doc(id).update({ status: nextStatus, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      } catch (error) {
+        console.error(error);
+        showMessage(recordMessage, 'အခြေအနေပြောင်းလဲမရပါ။ သင့် Master Role နှင့် Security Rules ကို စစ်ဆေးပါ။');
+      } finally { select.disabled = false; }
+    });
+    $('records-body').addEventListener('click', (event) => {
+      const button = event.target.closest('.detail-button');
+      if (!button) return;
+      const item = records.find(x => x.id === button.dataset.id);
+      if (item) alert(`${item.title}\n\n${item.details}`);
+    });
+    $('search-input').addEventListener('input', renderRecords);
+    $('status-filter').addEventListener('change', renderRecords);
+
+    $('export-button').addEventListener('click', () => {
+      const rows = [['Title','Agent','Details','Priority','Status','Created At']];
+      const search = $('search-input').value.trim().toLowerCase();
+      const status = $('status-filter').value;
+      records.filter(item => {
+        const text = [item.title,item.details,item.agentName].join(' ').toLowerCase();
+        return (!search || text.includes(search)) && (status === 'all' || item.status === status);
+      }).forEach(item => rows.push([item.title,item.agentName,item.details,item.priority,statusLabels[item.status],formatDate(item.createdAt)]));
+      const csv = '\uFEFF' + rows.map(row => row.map(value => `"${String(value ?? '').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a'); link.href = url; link.download = `teamdesk-records-${new Date().toISOString().slice(0,10)}.csv`; link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    $('logout-button').addEventListener('click', async () => {
+      if (auth) await auth.signOut();
+    });
+  </script>
+</body>
+</html>
+/>
+  <meta name="theme-color" content="#090f1d" />
+  <meta name="description" content="TeamDesk — real-time team and agent work-record management." />
+  <title>TeamDesk | Team Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'Noto Sans Myanmar', 'system-ui', 'sans-serif'] },
+          boxShadow: { glow: '0 0 0 1px rgba(99,102,241,.16), 0 18px 60px rgba(0,0,0,.28)' }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root { color-scheme: dark; }
+    body { background: #090f1d; }
+    .glass { background: rgba(17, 27, 47, .82); border: 1px solid rgba(148,163,184,.13); backdrop-filter: blur(14px); }
+    .field { width:100%; border-radius: .85rem; border:1px solid rgba(148,163,184,.2); background:#0b1425; color:#e5e7eb; padding:.8rem .95rem; outline:none; transition:.18s; }
+    .field:focus { border-color:#818cf8; box-shadow:0 0 0 3px rgba(99,102,241,.14); }
+    .field::placeholder { color:#64748b; }
+    .btn-primary { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:white; transition:.18s; }
+    .btn-primary:hover { filter:brightness(1.1); transform:translateY(-1px); }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .muted { color:#94a3b8; }
+    .scrollbar::-webkit-scrollbar { width:7px; height:7px; }
+    .scrollbar::-webkit-scrollbar-thumb { background:#334155; border-radius:10px; }
+    .status-pill { display:inline-flex; align-items:center; gap:.4rem; padding:.32rem .62rem; border-radius:999px; font-size:.72rem; font-weight:700; white-space:nowrap; }
+    .status-open { background:rgba(59,130,246,.13); color:#93c5fd; }
+    .status-in_progress { background:rgba(245,158,11,.13); color:#fcd34d; }
+    .status-done { background:rgba(16,185,129,.13); color:#6ee7b7; }
+    .status-cancelled { background:rgba(148,163,184,.13); color:#cbd5e1; }
+    .dot { width:7px; height:7px; border-radius:50%; display:inline-block; }
+    .fade-in { animation:fade .25s ease-out; }
+    @keyframes fade { from {opacity:0; transform:translateY(5px)} to {opacity:1; transform:translateY(0)} }
+    dialog { background:#111b2f; color:#e2e8f0; border:1px solid rgba(148,163,184,.2); border-radius:1.2rem; max-width:min(720px, calc(100vw - 28px)); width:100%; }
+    dialog::backdrop { background:rgba(2,6,23,.78); backdrop-filter:blur(5px); }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 font-sans antialiased">
+  <div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+    <div class="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-indigo-600/10 blur-3xl"></div>
+    <div class="absolute top-1/3 -right-40 h-96 w-96 rounded-full bg-violet-600/10 blur-3xl"></div>
+  </div>
+
+  <!-- Authentication screen -->
+  <main id="auth-screen" class="relative z-10 min-h-screen flex items-center justify-center p-4">
+    <section class="glass shadow-glow w-full max-w-md rounded-3xl p-7 sm:p-9 fade-in">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 grid place-items-center shadow-lg shadow-indigo-950/40">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-7" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 6h3v3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="text-xl font-extrabold tracking-tight">TeamDesk</div>
+          <div class="text-xs muted mt-0.5">TEAM & AGENT MANAGEMENT</div>
+        </div>
+      </div>
+      <div class="mb-6">
+        <p class="text-sm text-indigo-300 font-semibold mb-2">WELCOME BACK</p>
+        <h1 class="text-2xl font-bold">အကောင့်ဝင်ရန်</h1>
+        <p class="muted text-sm mt-2">Master သို့မဟုတ် Agent အကောင့်ဖြင့် ဝင်ရောက်ပါ။</p>
+      </div>
+      <div id="setup-warning" class="hidden rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200 mb-4">
+        Firebase ကို မချိတ်ဆက်ရသေးပါ။ ဖိုင်ထဲရှိ <code>firebaseConfig</code> ကို သင့် Firebase project အချက်အလက်များဖြင့် အစားထိုးပါ။
+      </div>
+      <form id="login-form" class="space-y-4">
+        <label class="block"><span class="text-sm text-slate-300 mb-2 block">အီးမေးလ်</span><input id="email" class="field" type="email" autocomplete="username" placeholder="name@example.com" required /></label>
+        <label class="block"><span class="text-sm text-slate-300 mb-2 block">စကားဝှက်</span><input id="password" class="field" type="password" autocomplete="current-password" placeholder="••••••••" required /></label>
+        <button id="login-button" class="btn-primary w-full rounded-xl py-3 font-bold" type="submit">Login ဝင်မည်</button>
+      </form>
+      <div id="auth-message" class="hidden mt-4 rounded-xl p-3 text-sm"></div>
+      <div class="mt-7 pt-5 border-t border-slate-700/60 flex items-center justify-between text-xs muted">
+        <span>Secure team workspace</span><button id="open-setup-auth" class="hover:text-indigo-300">Setup လမ်းညွှန်</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Main app -->
+  <div id="app-screen" class="hidden relative z-10 min-h-screen">
+    <header class="sticky top-0 z-20 border-b border-slate-800/80 bg-[#090f1d]/90 backdrop-blur-xl">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 grid place-items-center">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="min-w-0"><div class="font-extrabold tracking-tight">TeamDesk</div><div class="text-[11px] muted truncate">လုပ်ငန်းမှတ်တမ်း စီမံခန့်ခွဲမှု</div></div>
+        </div>
+        <div class="flex items-center gap-2 sm:gap-3">
+          <span id="connection-chip" class="hidden sm:inline-flex items-center gap-2 rounded-full border border-slate-700 px-3 py-1.5 text-xs muted"><i class="dot bg-slate-500"></i><span>Checking…</span></span>
+          <button id="open-setup-app" class="hidden sm:inline-flex rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800">Setup</button>
+          <div class="hidden sm:block text-right"><div id="header-name" class="text-sm font-semibold truncate max-w-36"></div><div id="header-role" class="text-[11px] text-indigo-300"></div></div>
+          <button id="logout-button" class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold hover:bg-slate-800">ထွက်ရန်</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-7 sm:py-9">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-7">
+        <div><p class="text-sm text-indigo-300 font-semibold mb-1" id="welcome-label">WORKSPACE</p><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight" id="page-title">Dashboard</h1><p class="muted text-sm mt-2" id="page-subtitle">အဖွဲ့၏ လုပ်ငန်းမှတ်တမ်းများကို တစ်နေရာတည်းတွင် စီမံပါ။</p></div>
+        <div class="text-xs muted" id="last-updated">Real-time sync enabled</div>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div class="glass rounded-2xl p-4 sm:p-5"><div class="text-xs muted">စုစုပေါင်းမှတ်တမ်း</div><div id="stat-total" class="text-2xl sm:text-3xl font-extrabold mt-2">0</div><div class="text-[11px] text-slate-500 mt-1">Loaded records</div></div>
+        <div class="glass rounded-2xl p-4 sm:p-5"><div class="text-xs muted">အသစ် / စောင့်ဆိုင်း</div><div id="stat-open" class="text-2xl sm:text-3xl font-extrabold text-blue-300 mt-2">0</div><div class="text-[11px] text-slate-500 mt-1">Open</div></div>
+        <div class="glass rounded-2xl p-4 sm:p-5"><div class="text-xs muted">လုပ်ဆောင်နေဆဲ</div><div id="stat-progress" class="text-2xl sm:text-3xl font-extrabold text-amber-300 mt-2">0</div><div class="text-[11px] text-slate-500 mt-1">In progress</div></div>
+        <div class="glass rounded-2xl p-4 sm:p-5"><div class="text-xs muted">ပြီးစီး</div><div id="stat-done" class="text-2xl sm:text-3xl font-extrabold text-emerald-300 mt-2">0</div><div class="text-[11px] text-slate-500 mt-1">Completed</div></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Agent submission form -->
+        <section id="submit-panel" class="hidden lg:col-span-4 glass rounded-2xl p-5 sm:p-6 h-fit">
+          <div class="flex items-center justify-between mb-5"><div><h2 class="font-bold text-lg">မှတ်တမ်းအသစ်</h2><p class="muted text-xs mt-1">လုပ်ငန်းဆောင်ရွက်မှုကို တင်သွင်းပါ။</p></div><span class="rounded-lg bg-indigo-500/15 text-indigo-300 p-2"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14m-7-7h14" stroke-linecap="round"/></svg></span></div>
+          <form id="record-form" class="space-y-4">
+            <label class="block"><span class="text-sm text-slate-300 mb-2 block">လုပ်ငန်းခေါင်းစဉ် <b class="text-rose-400">*</b></span><input id="record-title" class="field" maxlength="90" placeholder="ဥပမာ - Customer follow-up" required /></label>
+            <label class="block"><span class="text-sm text-slate-300 mb-2 block">အသေးစိတ်</span><textarea id="record-details" class="field resize-y min-h-28" maxlength="1000" placeholder="လုပ်ငန်းအကြောင်း အသေးစိတ်ရေးပါ…"></textarea></label>
+            <label class="block"><span class="text-sm text-slate-300 mb-2 block">ဦးစားပေးအဆင့်</span><select id="record-priority" class="field"><option value="normal">ပုံမှန်</option><option value="high">မြင့်</option><option value="urgent">အရေးကြီး</option></select></label>
+            <button id="submit-button" type="submit" class="btn-primary w-full rounded-xl py-3 font-bold">မှတ်တမ်းတင်မည်</button>
+          </form>
+          <div id="record-message" class="hidden mt-4 rounded-xl p-3 text-sm"></div>
+          <p class="text-[11px] muted mt-4 leading-relaxed">Internet မရှိချိန်တွင်လည်း မှတ်တမ်းများကို စက်ထဲတွင် ယာယီသိမ်းနိုင်ပြီး အင်တာနက်ပြန်ရသောအခါ Sync လုပ်ပါမည်။</p>
+        </section>
+
+        <!-- Records table -->
+        <section class="lg:col-span-8 glass rounded-2xl overflow-hidden">
+          <div class="p-5 sm:p-6 border-b border-slate-700/60">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div><h2 class="font-bold text-lg" id="records-heading">မှတ်တမ်းများ</h2><p class="muted text-xs mt-1" id="records-caption">နောက်ဆုံးတင်သွင်းထားသော မှတ်တမ်းများ</p></div>
+              <div class="flex gap-2">
+                <input id="search-input" class="field !w-full sm:!w-48 !py-2 !text-sm" placeholder="ရှာဖွေရန်…" aria-label="Search records" />
+                <select id="status-filter" class="field !w-32 !py-2 !text-sm" aria-label="Filter status"><option value="all">အားလုံး</option><option value="open">အသစ်</option><option value="in_progress">လုပ်ဆောင်နေ</option><option value="done">ပြီးစီး</option><option value="cancelled">ပယ်ဖျက်</option></select>
+              </div>
+            </div>
+          </div>
+          <div class="overflow-x-auto scrollbar">
+            <table class="w-full text-left min-w-[650px]">
+              <thead class="bg-slate-900/50 text-[11px] uppercase tracking-wider text-slate-500"><tr><th class="px-5 py-3 font-semibold">လုပ်ငန်း / Agent</th><th class="px-4 py-3 font-semibold">ဦးစားပေး</th><th class="px-4 py-3 font-semibold">အခြေအနေ</th><th class="px-4 py-3 font-semibold">ရက်စွဲ</th><th class="px-5 py-3 text-right font-semibold">Action</th></tr></thead>
+              <tbody id="records-body" class="divide-y divide-slate-800/80"><tr><td colspan="5" class="px-5 py-12 text-center muted text-sm">မှတ်တမ်းများကို ဖတ်ရှုနေသည်…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="px-5 py-3 border-t border-slate-700/60 flex items-center justify-between gap-3"><span id="record-count" class="text-xs muted">0 records</span><button id="export-button" class="text-xs font-semibold text-indigo-300 hover:text-indigo-200">Export CSV ↓</button></div>
+        </section>
+      </div>
+      <footer class="mt-8 text-center text-[11px] text-slate-600">TeamDesk · Real-time team workspace · Keep your Firebase security rules enabled</footer>
+    </main>
+  </div>
+
+  <!-- Setup dialog includes Firestore rules to copy into Firebase Console -->
+  <dialog id="setup-dialog" class="p-0 shadow-2xl">
+    <div class="p-5 sm:p-7 max-h-[85vh] overflow-y-auto scrollbar">
+      <div class="flex items-start justify-between gap-4"><div><div class="text-indigo-300 text-xs font-bold tracking-widest">CONFIGURATION</div><h2 class="text-xl font-bold mt-1">Firebase Setup လမ်းညွှန်</h2></div><button id="close-setup" class="rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5">✕</button></div>
+      <ol class="list-decimal pl-5 mt-5 space-y-2 text-sm text-slate-300 leading-relaxed">
+        <li>Firebase Console တွင် Project အသစ်ဖန်တီးပြီး <b>Authentication → Email/Password</b> ကို Enable လုပ်ပါ။</li>
+        <li><b>Firestore Database</b> ဖန်တီးပြီး Web App config ကို အောက်ပါ <code>firebaseConfig</code> နေရာတွင် ထည့်ပါ။</li>
+        <li>Authentication ထဲတွင် Master နှင့် Agent အကောင့်များကို ကြိုတင်ဖန်တီးပါ။</li>
+        <li>Firestore → <code>users</code> collection ထဲတွင် UID နဲ့တူသော document တစ်ခုစီ ဖန်တီးပါ။ Master အတွက် <code>{ role: "master", displayName: "Master Name" }</code>၊ Agent အတွက် <code>{ role: "agent", displayName: "Agent Name" }</code> ထည့်ပါ။</li>
+        <li>အောက်ပါ Security Rules ကို Firestore → Rules ထဲသို့ ကူးထည့်ပြီး Publish လုပ်ပါ။</li>
+      </ol>
+      <div class="mt-5 flex items-center justify-between gap-3"><h3 class="font-semibold text-sm">Firestore Security Rules</h3><button id="copy-rules" class="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3 py-2 text-xs font-bold">Copy Rules</button></div>
+      <pre class="mt-2 rounded-xl bg-[#080e19] border border-slate-700 p-4 overflow-x-auto text-xs text-emerald-200 leading-relaxed"><code id="rules-preview"></code></pre>
+      <p class="text-xs text-amber-200/90 mt-4 leading-relaxed">မှတ်ချက် — ဤဖိုင်သည် အသင်းအဖွဲ့၏ အထွေထွေ လုပ်ငန်းမှတ်တမ်းစနစ်ဖြစ်ပြီး ငွေကြေး၊ လောင်းကြေး သို့မဟုတ် လောင်းကစားလုပ်ငန်းဆောင်ရွက်ချက်များကို မစီမံပါ။ Production မတင်မီ Rules ကို စမ်းသပ်ပြီး Firebase App Check နှင့် သင့်တော်သော backup စနစ်ကို ထပ်မံဖွင့်ပါ။</p>
+    </div>
+  </dialog>
+
+  <script type="text/plain" id="firestore-rules-source">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isMaster() {
+      return signedIn() && userDoc().role == 'master';
+    }
+    function isAgent() {
+      return signedIn() && userDoc().role == 'agent';
+    }
+
+    match /users/{userId} {
+      allow get: if signedIn() && (request.auth.uid == userId || isMaster());
+      allow list: if isMaster();
+      // Provision roles from Firebase Console or a trusted Admin SDK only.
+      allow create, update, delete: if false;
+    }
+
+    match /workItems/{itemId} {
+      allow read: if isMaster() || (signedIn() && resource.data.createdBy == request.auth.uid);
+      allow create: if isAgent()
+        && request.resource.data.keys().hasOnly([
+          'createdBy', 'agentName', 'title', 'details', 'priority', 'status', 'createdAt'
+        ])
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.agentName == userDoc().displayName
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 90
+        && request.resource.data.details is string
+        && request.resource.data.details.size() <= 1000
+        && request.resource.data.priority in ['normal', 'high', 'urgent']
+        && request.resource.data.status == 'open'
+        && request.resource.data.createdAt == request.time;
+      allow update: if isMaster()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status in ['open', 'in_progress', 'done', 'cancelled']
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isMaster();
+    }
+  }
+}</script>
+
+  <!-- Firebase v9 Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Replace these values with your Firebase project's Web App configuration.
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const authScreen = $('auth-screen');
+    const appScreen = $('app-screen');
+    const authMessage = $('auth-message');
+    const recordMessage = $('record-message');
+    const setupDialog = $('setup-dialog');
+    const allStatus = ['open', 'in_progress', 'done', 'cancelled'];
+    const statusLabels = { open: 'အသစ်', in_progress: 'လုပ်ဆောင်နေ', done: 'ပြီးစီး', cancelled: 'ပယ်ဖျက်' };
+    const priorityLabels = { normal: 'ပုံမှန်', high: 'မြင့်', urgent: 'အရေးကြီး' };
+
+    let app, db, auth, currentUser = null, currentProfile = null, unsubscribeRecords = null;
+    let records = [];
+    let firebaseReady = false;
+
+    function showMessage(target, message, type = 'error') {
+      target.textContent = message;
+      target.className = 'mt-4 rounded-xl p-3 text-sm ' + (type === 'success' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-300 border border-rose-500/20');
+      target.classList.remove('hidden');
+    }
+    function hideMessage(target) { target.classList.add('hidden'); }
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+    function dateValue(value) {
+      if (!value) return null;
+      if (typeof value.toDate === 'function') return value.toDate();
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+    function formatDate(value) {
+      const date = dateValue(value);
+      return date ? new Intl.DateTimeFormat('my-MM', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }).format(date) : 'Sync pending';
+    }
+    function setConnection(online, detail = '') {
+      const chip = $('connection-chip');
+      const dot = chip.querySelector('.dot');
+      const label = chip.querySelector('span');
+      chip.classList.remove('hidden');
+      dot.className = 'dot ' + (online ? 'bg-emerald-400' : 'bg-amber-400');
+      label.textContent = online ? (detail || 'Online · Synced') : (detail || 'Offline · Cached');
+    }
+    function openSetup() {
+      $('rules-preview').textContent = $('firestore-rules-source').textContent.trim();
+      if (typeof setupDialog.showModal === 'function') setupDialog.showModal();
+      else setupDialog.setAttribute('open', '');
+    }
+    $('open-setup-auth').addEventListener('click', openSetup);
+    $('open-setup-app').addEventListener('click', openSetup);
+    $('close-setup').addEventListener('click', () => setupDialog.close());
+    setupDialog.addEventListener('click', (event) => { if (event.target === setupDialog) setupDialog.close(); });
+    $('copy-rules').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText($('firestore-rules-source').textContent.trim());
+        $('copy-rules').textContent = 'Copied ✓';
+        setTimeout(() => $('copy-rules').textContent = 'Copy Rules', 1600);
+      } catch (_) { $('copy-rules').textContent = 'Select and copy text'; }
+    });
+
+    function validConfig() {
+      return firebaseConfig.apiKey !== 'YOUR_API_KEY' && firebaseConfig.projectId !== 'YOUR_PROJECT_ID' && firebaseConfig.appId !== 'YOUR_APP_ID';
+    }
+    if (!validConfig()) {
+      $('setup-warning').classList.remove('hidden');
+      $('login-button').disabled = true;
+    } else {
+      try {
+        app = firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+        db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+          if (err.code === 'failed-precondition') console.warn('Firestore persistence is already active in another tab.');
+          else if (err.code === 'unimplemented') console.warn('This browser does not support Firestore offline persistence.');
+          else console.warn('Firestore persistence:', err.message);
+        });
+        firebaseReady = true;
+        window.addEventListener('online', () => setConnection(true));
+        window.addEventListener('offline', () => setConnection(false));
+        auth.onAuthStateChanged(handleAuthState);
+      } catch (error) {
+        console.error(error);
+        showMessage(authMessage, 'Firebase စတင်ဖွင့်ရာတွင် အမှားရှိနေပါသည်။ Config ကို ပြန်စစ်ပါ။');
+      }
+    }
+
+    $('login-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!firebaseReady) return;
+      hideMessage(authMessage);
+      const button = $('login-button');
+      button.disabled = true; button.textContent = 'ဝင်ရောက်နေသည်…';
+      try {
+        await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value);
+      } catch (error) {
+        const messages = {
+          'auth/invalid-email': 'အီးမေးလ်ပုံစံ မမှန်ပါ။',
+          'auth/user-not-found': 'ဤအီးမေးလ်အတွက် အကောင့်မတွေ့ပါ။',
+          'auth/wrong-password': 'စကားဝှက် မှားနေပါသည်။',
+          'auth/invalid-credential': 'အီးမေးလ် သို့မဟုတ် စကားဝှက် မမှန်ပါ။',
+          'auth/too-many-requests': 'ကြိုးစားမှု များလွန်းပါသည်။ ခဏနားပြီး ပြန်စမ်းပါ။'
+        };
+        showMessage(authMessage, messages[error.code] || error.message || 'Login မအောင်မြင်ပါ။');
+      } finally {
+        button.disabled = false; button.textContent = 'Login ဝင်မည်';
+      }
+    });
+
+    async function handleAuthState(user) {
+      if (!user) {
+        currentUser = null; currentProfile = null; records = [];
+        if (unsubscribeRecords) unsubscribeRecords();
+        appScreen.classList.add('hidden'); authScreen.classList.remove('hidden');
+        return;
+      }
+      currentUser = user;
+      try {
+        const profileSnap = await db.collection('users').doc(user.uid).get();
+        if (!profileSnap.exists || !['master', 'agent'].includes(profileSnap.data().role)) {
+          await auth.signOut();
+          showMessage(authMessage, 'အသုံးပြုသူ Role မသတ်မှတ်ရသေးပါ။ Firebase users collection တွင် UID နှင့်တူသော document ဖန်တီးပါ။');
+          return;
+        }
+        currentProfile = profileSnap.data();
+        if (!currentProfile.active && currentProfile.active !== undefined) {
+          await auth.signOut();
+          showMessage(authMessage, 'ဤအကောင့်ကို ပိတ်ထားပါသည်။ Admin ကို ဆက်သွယ်ပါ။');
+          return;
+        }
+        authScreen.classList.add('hidden'); appScreen.classList.remove('hidden');
+        $('header-name').textContent = currentProfile.displayName || user.email;
+        $('header-role').textContent = currentProfile.role === 'master' ? 'MASTER' : 'AGENT';
+        $('welcome-label').textContent = currentProfile.role === 'master' ? 'MASTER WORKSPACE' : 'AGENT WORKSPACE';
+        $('page-title').textContent = currentProfile.role === 'master' ? 'Master Dashboard' : 'Agent Dashboard';
+        $('page-subtitle').textContent = currentProfile.role === 'master' ? 'အဖွဲ့ဝင်များ၏ လုပ်ငန်းမှတ်တမ်းအားလုံးကို အချိန်နှင့်တစ်ပြေးညီ ကြည့်ရှုစီမံနိုင်သည်။' : 'သင့်လုပ်ငန်းမှတ်တမ်းများကို တင်သွင်းပြီး အခြေအနေကို စောင့်ကြည့်နိုင်သည်။';
+        $('submit-panel').classList.toggle('hidden', currentProfile.role !== 'agent');
+        $('records-heading').textContent = currentProfile.role === 'master' ? 'အဖွဲ့၏ မှတ်တမ်းအားလုံး' : 'ကျွန်ုပ်၏ မှတ်တမ်းများ';
+        $('records-caption').textContent = currentProfile.role === 'master' ? 'Agents အားလုံးမှ တင်သွင်းသော မှတ်တမ်းများ' : 'သင်တင်သွင်းထားသော မှတ်တမ်းများ';
+        attachRecordsListener();
+        setConnection(navigator.onLine, navigator.onLine ? 'Online · Connecting' : 'Offline · Cached');
+      } catch (error) {
+        console.error(error);
+        await auth.signOut();
+        showMessage(authMessage, 'အသုံးပြုသူအချက်အလက်ကို ဖတ်မရပါ။ Firestore Security Rules နှင့် users document ကို စစ်ဆေးပါ။');
+      }
+    }
+
+    function attachRecordsListener() {
+      if (unsubscribeRecords) unsubscribeRecords();
+      const base = db.collection('workItems');
+      const query = currentProfile.role === 'master'
+        ? base.orderBy('createdAt', 'desc').limit(500)
+        : base.where('createdBy', '==', currentUser.uid).limit(200);
+      unsubscribeRecords = query.onSnapshot({ includeMetadataChanges: true }, (snapshot) => {
+        records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        records.sort((a, b) => (dateValue(b.createdAt)?.getTime() || 0) - (dateValue(a.createdAt)?.getTime() || 0));
+        renderRecords();
+        const fromCache = snapshot.metadata.fromCache;
+        const pending = snapshot.metadata.hasPendingWrites;
+        setConnection(navigator.onLine && !fromCache, pending ? 'Syncing changes…' : (fromCache ? 'Offline · Cached' : 'Online · Synced'));
+        $('last-updated').textContent = pending ? 'Changes waiting to sync' : 'Updated ' + new Date().toLocaleTimeString();
+      }, (error) => {
+        console.error(error);
+        showMessage(recordMessage, 'မှတ်တမ်းများကို ဖတ်မရပါ။ Firestore Rules / Index ကို စစ်ဆေးပါ။');
+      });
+    }
+
+    function renderRecords() {
+      const search = $('search-input').value.trim().toLowerCase();
+      const status = $('status-filter').value;
+      const filtered = records.filter(item => {
+        const text = [item.title, item.details, item.agentName, item.priority, statusLabels[item.status]].join(' ').toLowerCase();
+        return (!search || text.includes(search)) && (status === 'all' || item.status === status);
+      });
+      $('stat-total').textContent = records.length;
+      $('stat-open').textContent = records.filter(x => x.status === 'open').length;
+      $('stat-progress').textContent = records.filter(x => x.status === 'in_progress').length;
+      $('stat-done').textContent = records.filter(x => x.status === 'done').length;
+      $('record-count').textContent = `${filtered.length} / ${records.length} records`;
+      if (!filtered.length) {
+        $('records-body').innerHTML = `<tr><td colspan="5" class="px-5 py-14 text-center"><div class="text-3xl mb-3">☷</div><div class="text-sm font-semibold text-slate-300">မှတ်တမ်း မရှိသေးပါ</div><div class="text-xs muted mt-1">ရှာဖွေမှုကို ပြောင်းပါ သို့မဟုတ် မှတ်တမ်းအသစ် တင်သွင်းပါ။</div></td></tr>`;
+        return;
+      }
+      $('records-body').innerHTML = filtered.map(item => {
+        const currentStatus = allStatus.includes(item.status) ? item.status : 'open';
+        const priority = priorityLabels[item.priority] || 'ပုံမှန်';
+        const statusClass = `status-${currentStatus}`;
+        const statusControl = currentProfile.role === 'master'
+          ? `<select data-id="${escapeHtml(item.id)}" class="status-select bg-[#0b1425] border border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-indigo-500"><option value="open" ${currentStatus==='open'?'selected':''}>အသစ်</option><option value="in_progress" ${currentStatus==='in_progress'?'selected':''}>လုပ်ဆောင်နေ</option><option value="done" ${currentStatus==='done'?'selected':''}>ပြီးစီး</option><option value="cancelled" ${currentStatus==='cancelled'?'selected':''}>ပယ်ဖျက်</option></select>`
+          : `<span class="status-pill ${statusClass}"><i class="dot bg-current"></i>${statusLabels[currentStatus]}</span>`;
+        return `<tr class="hover:bg-slate-800/25 transition-colors">
+          <td class="px-5 py-4"><div class="font-semibold text-sm text-slate-200">${escapeHtml(item.title || 'Untitled')}</div><div class="text-xs muted mt-1">${escapeHtml(item.agentName || 'Agent')}${item.details ? ' · ' + escapeHtml(item.details.slice(0,65)) + (item.details.length>65?'…':'') : ''}</div></td>
+          <td class="px-4 py-4"><span class="text-xs ${item.priority==='urgent'?'text-rose-300':item.priority==='high'?'text-amber-300':'text-slate-400'}">${escapeHtml(priority)}</span></td>
+          <td class="px-4 py-4">${statusControl}</td>
+          <td class="px-4 py-4 text-xs muted whitespace-nowrap">${escapeHtml(formatDate(item.createdAt))}</td>
+          <td class="px-5 py-4 text-right">${item.details ? `<button class="detail-button text-xs text-indigo-300 hover:text-indigo-200" data-id="${escapeHtml(item.id)}">အသေးစိတ်</button>` : '<span class="text-slate-600">—</span>'}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    $('record-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!currentUser || currentProfile?.role !== 'agent') return;
+      hideMessage(recordMessage);
+      const title = $('record-title').value.trim();
+      const details = $('record-details').value.trim();
+      const priority = $('record-priority').value;
+      if (!title || title.length > 90 || details.length > 1000) {
+        showMessage(recordMessage, 'ခေါင်းစဉ်နှင့် အသေးစိတ်စာသားကို ပြန်စစ်ပါ။'); return;
+      }
+      const button = $('submit-button'); button.disabled = true; button.textContent = 'သိမ်းဆည်းနေသည်…';
+      try {
+        await db.collection('workItems').add({
+          createdBy: currentUser.uid,
+          agentName: String(currentProfile.displayName || currentUser.email).slice(0, 80),
+          title, details, priority, status: 'open',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        $('record-form').reset();
+        showMessage(recordMessage, 'မှတ်တမ်းကို သိမ်းဆည်းပြီးပါပြီ။', 'success');
+      } catch (error) {
+        console.error(error);
+        showMessage(recordMessage, error.code === 'permission-denied' ? 'ခွင့်ပြုချက်မရှိပါ။ Firestore Security Rules / Agent Role ကို စစ်ဆေးပါ။' : 'သိမ်းဆည်းမရပါ။ အင်တာနက်နှင့် Firebase config ကို စစ်ဆေးပါ။');
+      } finally { button.disabled = false; button.textContent = 'မှတ်တမ်းတင်မည်'; }
+    });
+
+    $('records-body').addEventListener('change', async (event) => {
+      const select = event.target.closest('.status-select');
+      if (!select || currentProfile?.role !== 'master') return;
+      const id = select.dataset.id;
+      const nextStatus = select.value;
+      select.disabled = true;
+      try {
+        await db.collection('workItems').doc(id).update({ status: nextStatus, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      } catch (error) {
+        console.error(error);
+        showMessage(recordMessage, 'အခြေအနေပြောင်းလဲမရပါ။ သင့် Master Role နှင့် Security Rules ကို စစ်ဆေးပါ။');
+      } finally { select.disabled = false; }
+    });
+    $('records-body').addEventListener('click', (event) => {
+      const button = event.target.closest('.detail-button');
+      if (!button) return;
+      const item = records.find(x => x.id === button.dataset.id);
+      if (item) alert(`${item.title}\n\n${item.details}`);
+    });
+    $('search-input').addEventListener('input', renderRecords);
+    $('status-filter').addEventListener('change', renderRecords);
+
+    $('export-button').addEventListener('click', () => {
+      const rows = [['Title','Agent','Details','Priority','Status','Created At']];
+      const search = $('search-input').value.trim().toLowerCase();
+      const status = $('status-filter').value;
+      records.filter(item => {
+        const text = [item.title,item.details,item.agentName].join(' ').toLowerCase();
+        return (!search || text.includes(search)) && (status === 'all' || item.status === status);
+      }).forEach(item => rows.push([item.title,item.agentName,item.details,item.priority,statusLabels[item.status],formatDate(item.createdAt)]));
+      const csv = '\uFEFF' + rows.map(row => row.map(value => `"${String(value ?? '').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a'); link.href = url; link.download = `teamdesk-records-${new Date().toISOString().slice(0,10)}.csv`; link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    $('logout-button').addEventListener('click', async () => {
+      if (auth) await auth.signOut();
+    });
+  </script>
+</body>
+</html>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D / 3D Master & Agent System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans p-4 min-h-screen">
+
+    <div id="app"></div>
+
+    <script>
+        // ==========================================
+        // သင့်ရဲ့ Firebase Config အချက်အလက်များ
+        // =========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6Gpq-jvL5z463VmBlkPngJy1Nv3hyWHA",
+            authDomain: "king-six-project.firebaseapp.com",
+            projectId: "king-six-project",
+            storageBucket: "king-six-project.appspot.com",
+            messagingSenderId: "797839158583",
+            appId: "1:797839158583:web:28c5a78ebfd6b78dfabeb2"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        document.getElementById('app').innerHTML = `
+            <div class="max-w-4xl mx-auto space-y-4">
+                <div class="bg-slate-800 p-4 rounded-xl shadow-md flex justify-between items-center">
+                    <h1 class="text-lg font-bold text-amber-400">📊 2D / 3D ဒိုင် & ကော်မရှင် စနစ်</h1>
+                    <div class="space-x-2">
+                        <button onclick="setRole('master')" id="btnMaster" class="px-3 py-1 bg-indigo-600 rounded text-xs font-bold">👑 ဒိုင်ချုပ်</button>
+                        <button onclick="setRole('agent')" id="btnAgent" class="px-3 py-1 bg-slate-700 rounded text-xs font-bold">💼 ကော်မရှင်</button>
+                    </div>
+                </div>
+                <div id="mainContent" class="bg-slate-800 p-6 rounded-xl shadow-md"></div>
+            </div>
+        `;
+
+        function setRole(role) {
+            const content = document.getElementById('mainContent');
+            if (role === 'master') {
+                document.getElementById('btnMaster').className = "px-3 py-1 bg-indigo-600 rounded text-xs font-bold";
+                document.getElementById('btnAgent').className = "px-3 py-1 bg-slate-700 rounded text-xs font-bold";
+                content.innerHTML = `
+                    <h2 class="text-md font-bold text-indigo-400 mb-4">👑 ဒိုင်ချုပ် ထိန်းချုပ်ရန်</h2>
+                    <p class="text-sm text-slate-300">ကော်မရှင်များ ရိုက်ထည့်လိုက်သော စာရင်းများ အောက်ပါအတိုင်း Real-time ပေါ်လာပါမည်။</p>
+                    <div id="liveBets" class="mt-4 overflow-x-auto"></div>
+                `;
+                loadMasterBets();
+            } else {
+                document.getElementById('btnAgent').className = "px-3 py-1 bg-emerald-600 rounded text-xs font-bold";
+                document.getElementById('btnMaster').className = "px-3 py-1 bg-slate-700 rounded text-xs font-bold";
+                content.innerHTML = `
+                    <h2 class="text-md font-bold text-emerald-400 mb-4">✍️ ကော်မရှင် စာရင်းသွင်းရန်</h2>
+                    <form onsubmit="submitBet(event)" class="space-y-3">
+                        <div>
+                            <label class="text-xs text-slate-400">ကော်မရှင် အမည်</label>
+                            <input type="text" id="agentName" value="Agent_001" class="w-full mt-1 bg-slate-700 p-2 rounded text-sm border border-slate-600">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400">ဂဏန်း (ဥပမာ - 45)</label>
+                            <input type="text" id="betNumber" maxlength="3" class="w-full mt-1 bg-slate-700 p-2 rounded text-lg font-mono border border-slate-600" required>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400">ထိုးကြေး (ကျပ်)</label>
+                            <input type="number" id="betAmount" class="w-full mt-1 bg-slate-700 p-2 rounded text-lg font-mono border border-slate-600" required>
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 py-2 rounded font-bold">ဘောက်ချာ ဖြတ်မည်</button>
+                    </form>
+                    <p id="msg" class="text-sm mt-2 text-center"></p>
+                `;
+            }
+        }
+
+        window.submitBet = function(e) {
+            e.preventDefault();
+            const agent = document.getElementById('agentName').value;
+            const number = document.getElementById('betNumber').value;
+            const amount = Number(document.getElementById('betAmount').value);
+
+            db.collection('bets').add({
+                agent,
+                number,
+                amount,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                document.getElementById('msg').innerHTML = `<span class="text-emerald-400">✅ ဘောက်ချာ အောင်မြင်စွာ ဝင်ပါပြီ (${number})</span>`;
+                document.getElementById('betNumber').value = '';
+                document.getElementById('betAmount').value = '';
+            }).catch(err => {
+                document.getElementById('msg').innerHTML = `<span class="text-rose-400">❌ အမှားအယွင်း ရှိသည်</span>`;
+            });
+        }
+
+        function loadMasterBets() {
+            db.collection('bets').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+                const container = document.getElementById('liveBets');
+                if(!container) return;
+                let html = `<table class="w-full text-left text-xs"><thead class="bg-slate-700"><tr><th class="p-2">Agent</th><th class="p-2">ဂဏန်း</th><th class="p-2">ပမာဏ</th></tr></thead><tbody>`;
+                if(snapshot.empty) {
+                    html += `<tr><td colspan="3" class="p-4 text-center text-slate-500">စာရင်း မရှိသေးပါ။</td></tr>`;
+                } else {
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        html += `<tr class="border-b border-slate-700"><td class="p-2">${d.agent}</td><td class="p-2 font-mono font-bold text-amber-400">${d.number}</td><td class="p-2 font-mono text-emerald-400">${d.amount} ကျပ်</td></tr>`;
+                    });
+                }
+                html += `</tbody></table>`;
+                container.innerHTML = html; 
+            });
+        }
+
+        setRole('master');
+    </script>
+</body>
+</html>
